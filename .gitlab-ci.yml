@@ -3,16 +3,11 @@ include:
     ref: rust-v1
     file:
       - '/rust.yml'
-  - project: 'famedly/company/devops/templates/ci-cd'
-    ref: docker-v1
-    file:
-      - '/docker.yml'
 
 stages:
   - test
-  - build
   - doc
-  - deploy
+  - publish
 
 cargo-check:
   extends: .cargo_check
@@ -21,21 +16,5 @@ cargo-check:
     - bash tests/setup.sh
     - !reference [.cargo_check, script]
 
-cargo-build:
-  extends: .cargo_build
-  # Optional, remove if not needed
-  script:
-    - !reference [.cargo_build, script]
-    - mv config.sample.yaml ./target/release/config.yaml
-
 pages:
   extends: .cargo_doc
-
-docker-releases:
-  extends: .docker_releases
-
-docker-tags:
-  extends: .docker_tags
-
-docker-branches:
-  extends: .docker_branches

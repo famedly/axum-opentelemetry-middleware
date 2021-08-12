@@ -13,10 +13,6 @@
 
 Short description of the project.
 
-## Getting Started
-
-Instructions of how to get the project running.
-
 ---
 
 # Famedly
