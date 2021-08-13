@@ -4,8 +4,6 @@ version = "0.1.0"
 authors = []
 edition = "2018"
 resolver = "2"
+publish = ["famedly"]
 
 [dependencies]
-
-[build-dependencies]
-vergen = "5.1.0" # vergen passes metadata like the version and git commit hash to cargo as a compile-time environment variables
