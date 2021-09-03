@@ -1,0 +1,9 @@
+[package]
+name = "project-name"
+version = "0.1.0"
+authors = []
+edition = "2018"
+resolver = "2"
+publish = ["famedly"]
+
+[dependencies]
