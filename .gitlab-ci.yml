@@ -1,0 +1,23 @@
+include:
+  - project: 'famedly/company/devops/templates/ci-cd'
+    ref: rust-v1
+    file:
+      - '/rust.yml'
+
+stages:
+  - test
+  - doc
+  - publish
+
+cargo-check:
+  extends: .cargo_check
+  # Optional, remove if not needed
+  script:
+    - bash tests/setup.sh
+    - !reference [.cargo_check, script]
+
+cargo-publish:
+  extends: .cargo_publish
+
+pages:
+  extends: .cargo_doc
