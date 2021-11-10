@@ -13,6 +13,12 @@
 
 Short description of the project.
 
+## Pre-commit usage
+
+1. If not installed, install with `pip install pre-commit`
+2. Run `pre-commit autoupdate` to update the pre-commit config to use the newest template
+3. Run `pre-commit install` to install the pre-commit hooks to your local environment
+
 ---
 
 # Famedly
