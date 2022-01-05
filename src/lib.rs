@@ -8,7 +8,8 @@
 	dead_code,
 	clippy::unwrap_used,
 	clippy::expect_used,
-	clippy::missing_docs_in_private_items
+	clippy::missing_docs_in_private_items,
+	clippy::missing_panics_doc
 )]
 
 /// Write a hello world message
