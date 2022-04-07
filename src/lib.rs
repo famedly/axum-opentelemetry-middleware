@@ -1,18 +1,7 @@
 //! TODO: crate documentation
 
-#![deny(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_qualifications)]
-#![warn(
-	missing_debug_implementations,
-	missing_docs,
-	unused_import_braces,
-	dead_code,
-	clippy::unwrap_used,
-	clippy::expect_used,
-	clippy::missing_docs_in_private_items,
-	clippy::missing_panics_doc
-)]
-
 /// Write a hello world message
+#[allow(clippy::print_stdout)]
 pub fn hello_world() {
-	println!("Hello, world!")
+	println!("Hello, world!");
 }
