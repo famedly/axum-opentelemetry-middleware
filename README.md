@@ -1,4 +1,4 @@
-# Project Name
+# Axum Opentelemetry Middelware
 
 [![pipeline status][badge-pipeline-img]][badge-pipeline-url]
 [![coverage report][badge-coverage-img]][badge-coverage-url]
@@ -11,7 +11,15 @@
 [badge-docs-main-img]: https://img.shields.io/badge/docs-main-blue
 [badge-docs-main-url]: https://famedly.gitlab.io/company/backend/templates/service-template/project_name/index.html
 
-Short description of the project.
+A middleware for axum that allows users to get insight into which endpoints are being hit how often for how long as well as registering their own metrics.
+
+Currently it only supports outputting metrics to prometheus.
+For usage please reference the docs or the examples folder.
+
+By default the following metrics are tracked:
+* `http.requests.duration.seconds` (labels: endpoint, method, status): the (internal) request duration for all tracked endpoints
+* `http.requests.total` (labels: endpoint, method, status): the amount of requests for all tracked endpoints
+* `http.mismatched.requests.total` (labels: none): the amount of attempted requests that didn't hit a registered endpoint
 
 ## Lints
 

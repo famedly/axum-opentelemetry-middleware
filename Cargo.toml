@@ -1,9 +1,25 @@
 [package]
-name = "project-name"
+name = "axum-opentelemetry-middleware"
 version = "0.1.0"
 authors = []
 edition = "2021"
 resolver = "2"
 publish = ["famedly"]
 
+
 [dependencies]
+axum = { version = "0.5.1", features = ["headers"] }
+base64 = "0.13.0"
+bytes = "1.1.0"
+futures = "0.3.21"
+opentelemetry = "0.17.0"
+opentelemetry-prometheus = "0.10.0"
+prometheus = "0.13.0"
+time = "0.3.9"
+tokio = { version = "1.17.0", features = ["rt-multi-thread", "macros"] }
+tower = "0.4.12"
+
+[dev-dependencies]
+futures = "0.3.21"
+http = "0.2.6"
+regex = "1.5.5"
