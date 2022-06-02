@@ -4,12 +4,12 @@
 [![coverage report][badge-coverage-img]][badge-coverage-url]
 [![docs main][badge-docs-main-img]][badge-docs-main-url]
 
-[badge-pipeline-img]: https://gitlab.com/famedly/company/backend/templates/service-template/badges/main/pipeline.svg
-[badge-pipeline-url]: https://gitlab.com/famedly/company/backend/templates/service-template/-/commits/main
-[badge-coverage-img]: https://gitlab.com/famedly/company/backend/templates/service-template/badges/main/coverage.svg
-[badge-coverage-url]: https://gitlab.com/famedly/company/backend/templates/service-template/-/commits/main
+[badge-pipeline-img]: https://gitlab.com/famedly/company/backend/libraries/axum-opentelemetry-middleware/badges/main/pipeline.svg
+[badge-pipeline-url]: https://gitlab.com/famedly/company/backend/libraries/axum-opentelemetry-middleware/-/commits/main
+[badge-coverage-img]: https://gitlab.com/famedly/company/backend/libraries/axum-opentelemetry-middleware/badges/main/coverage.svg
+[badge-coverage-url]: https://gitlab.com/famedly/company/backend/libraries/axum-opentelemetry-middleware/-/commits/main
 [badge-docs-main-img]: https://img.shields.io/badge/docs-main-blue
-[badge-docs-main-url]: https://famedly.gitlab.io/company/backend/templates/service-template/project_name/index.html
+[badge-docs-main-url]: https://famedly.gitlab.io/company/backend/libraries/axum-opentelemetry-middleware/axum_opentelemetry_middleware/index.html
 
 A middleware for axum that allows users to get insight into which endpoints are being hit how often for how long as well as registering their own metrics.
 
