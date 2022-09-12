@@ -24,6 +24,9 @@ use opentelemetry_prometheus::PrometheusExporter;
 use prometheus::{Encoder, TextEncoder};
 use tower::{Layer, Service};
 
+/// Type for valid functions for filtering metrics
+type FilterFunction = Arc<dyn Fn(&str, &str) -> bool + Send + Sync>;
+
 /// Builder for the metric recorder middleware.
 ///
 /// Usage example:
@@ -54,7 +57,7 @@ pub struct RecorderMiddlewareBuilder {
 	exporter: PrometheusExporter,
 	/// Optional function for determining if an endpoint should be recorded or
 	/// not
-	filter_function: Option<Arc<dyn Fn(&str, &str) -> bool + Send + Sync>>,
+	filter_function: Option<FilterFunction>,
 	/// Meter for people to register their own metrics
 	pub meter: Meter,
 }
@@ -122,7 +125,7 @@ pub struct RecorderMiddleware {
 	/// Amount of http requests being made to unknown paths
 	http_unmatched_requests_total: Counter<u64>,
 	/// User provided function
-	filter_function: Option<Arc<dyn Fn(&str, &str) -> bool + Send + Sync>>,
+	filter_function: Option<FilterFunction>,
 }
 
 impl fmt::Debug for RecorderMiddleware {
@@ -142,7 +145,7 @@ impl RecorderMiddleware {
 	fn new(
 		meter: Meter,
 		exporter: PrometheusExporter,
-		filter_function: Option<Arc<dyn Fn(&str, &str) -> bool + Send + Sync>>,
+		filter_function: Option<FilterFunction>,
 	) -> Self {
 		// ValueRecorder == prometheus histogram
 		let http_requests_duration_seconds =

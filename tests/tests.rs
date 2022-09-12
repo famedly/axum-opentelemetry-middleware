@@ -38,7 +38,7 @@ async fn basic_functionality() -> Result<(), Box<dyn std::error::Error>> {
 	let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").init();
 	let metrics_middleware = metrics_middleware.build();
 
-	let mut service: Router<Body> = Router::new()
+	let mut service: Router<(), Body> = Router::new()
 		.route("/metrics", get(axum_opentelemetry_middleware::metrics_endpoint))
 		.route("/visible_fox", get(visible_fox))
 		.route("/shy_fox", get(shy_fox))
