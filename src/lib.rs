@@ -5,6 +5,7 @@ use std::{
 	fmt,
 	sync::Arc,
 	task::{Context, Poll},
+	time::Duration,
 };
 
 use axum::{
@@ -16,13 +17,20 @@ use axum::{
 };
 use futures::future::BoxFuture;
 use opentelemetry::{
-	metrics::{Counter, Meter, MeterProvider, ValueRecorder},
-	sdk::Resource,
+	metrics::{Counter, Histogram, Meter, MeterProvider},
+	sdk::{
+		export::metrics::aggregation,
+		metrics::{controllers, processors, selectors},
+		Resource,
+	},
 	KeyValue,
 };
 use opentelemetry_prometheus::PrometheusExporter;
 use prometheus::{Encoder, TextEncoder};
 use tower::{Layer, Service};
+
+/// Filter function type.
+type FilterFunction = Arc<dyn Fn(&str, &str) -> bool + Send + Sync>;
 
 /// Builder for the metric recorder middleware.
 ///
@@ -54,7 +62,7 @@ pub struct RecorderMiddlewareBuilder {
 	exporter: PrometheusExporter,
 	/// Optional function for determining if an endpoint should be recorded or
 	/// not
-	filter_function: Option<Arc<dyn Fn(&str, &str) -> bool + Send + Sync>>,
+	filter_function: Option<FilterFunction>,
 	/// Meter for people to register their own metrics
 	pub meter: Meter,
 }
@@ -73,19 +81,25 @@ impl RecorderMiddlewareBuilder {
 	/// Creates the builder for the optentelemetry middleware
 	#[must_use]
 	pub fn new(service_name: &str) -> Self {
-		let exporter = opentelemetry_prometheus::exporter()
-			.with_resource(Resource::new(vec![KeyValue::new(
-				"service.name",
-				service_name.to_owned(),
-			)]))
-			.init();
+		let controller = controllers::basic(
+			processors::factory(
+				selectors::simple::histogram([0.1, 1.0, 5.0]),
+				aggregation::cumulative_temporality_selector(),
+			)
+			.with_memory(true),
+		)
+		.with_resource(Resource::new(vec![KeyValue::new("service.name", service_name.to_owned())]))
+		.with_collect_period(Duration::from_millis(500))
+		.build();
+
+		let exporter = opentelemetry_prometheus::exporter(controller).init();
 
 		#[allow(clippy::expect_used)]
 		// If this fails then something is deeply wrong with the opentelemetry_prometheus crate
 		let meter = exporter
-			.provider()
+			.meter_provider()
 			.expect("Failed to get PrometheusExporter provider")
-			.meter("axum-opentelemetry", None);
+			.meter("axum-opentelemetry");
 
 		Self { exporter, meter, filter_function: None }
 	}
@@ -116,13 +130,13 @@ pub struct RecorderMiddleware {
 	/// The prometheus exporter
 	exporter: PrometheusExporter,
 	/// Metric tracking the duration of each request
-	http_requests_duration_seconds: ValueRecorder<f64>,
+	http_requests_duration_seconds: Histogram<f64>,
 	/// Metric tracking amounts of taken requests
 	http_requests_total: Counter<u64>,
 	/// Amount of http requests being made to unknown paths
 	http_unmatched_requests_total: Counter<u64>,
 	/// User provided function
-	filter_function: Option<Arc<dyn Fn(&str, &str) -> bool + Send + Sync>>,
+	filter_function: Option<FilterFunction>,
 }
 
 impl fmt::Debug for RecorderMiddleware {
@@ -142,11 +156,11 @@ impl RecorderMiddleware {
 	fn new(
 		meter: Meter,
 		exporter: PrometheusExporter,
-		filter_function: Option<Arc<dyn Fn(&str, &str) -> bool + Send + Sync>>,
+		filter_function: Option<FilterFunction>,
 	) -> Self {
 		// ValueRecorder == prometheus histogram
 		let http_requests_duration_seconds =
-			meter.f64_value_recorder("http.requests.duration.seconds").init();
+			meter.f64_histogram("http.requests.duration.seconds").init();
 
 		let http_requests_total = meter.u64_counter("http.requests.total").init();
 		let http_unmatched_requests_total =
@@ -200,10 +214,12 @@ where
 			req.extensions().get::<MatchedPath>().map(|path| path.as_str().to_owned());
 		let future = self.inner.call(req);
 		Box::pin(async move {
+			let ctx = opentelemetry::Context::current();
+
 			let used_path = match matched_path {
 				Some(path) => path,
 				None => {
-					data.http_unmatched_requests_total.add(1, &[]);
+					data.http_unmatched_requests_total.add(&ctx, 1, &[]);
 					return future.await;
 				}
 			};
@@ -229,8 +245,12 @@ where
 				KeyValue::new("status", status),
 			];
 
-			data.http_requests_duration_seconds.record(time_taken.as_seconds_f64(), &attributes);
-			data.http_requests_total.add(1, &attributes);
+			data.http_requests_duration_seconds.record(
+				&ctx,
+				time_taken.as_seconds_f64(),
+				&attributes,
+			);
+			data.http_requests_total.add(&ctx, 1, &attributes);
 
 			Ok(resp)
 		})
