@@ -12,7 +12,7 @@
 use std::net::SocketAddr;
 
 use axum::{response::IntoResponse, routing::get, Extension, Router};
-use opentelemetry::metrics::Counter;
+use opentelemetry::{metrics::Counter, Context};
 use tokio::time::{sleep, Duration};
 
 async fn uwu() -> impl IntoResponse {
@@ -22,9 +22,10 @@ async fn uwu() -> impl IntoResponse {
 /// Foxes need some time to be counted!
 /// (Will increase the fox counter every 100ms until it counts 50 foxes)
 async fn fooox(Extension(fox_counter): Extension<Counter<u64>>) -> impl IntoResponse {
+	let ctx = Context::current();
 	for _ in 0..50 {
 		sleep(Duration::from_millis(100)).await;
-		fox_counter.add(1, &[]);
+		fox_counter.add(&ctx, 1, &[]);
 	}
 	"Counted lots of foxes!!!"
 }

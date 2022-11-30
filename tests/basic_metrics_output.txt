@@ -7,8 +7,8 @@ http_mismatched_requests_total{service_name="🦊"} 10
 # HELP http_requests_duration_seconds http.requests.duration.seconds
 # TYPE http_requests_duration_seconds histogram
 http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",service_name="🦊",status="200",le="FLOAT"} 5
-http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",service_name="🦊",status="200",le="FLOAT"} 5
-http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",service_name="🦊",status="200",le="FLOAT"} 5
+http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",service_name="🦊",status="200",le="1"} 5
+http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",service_name="🦊",status="200",le="5"} 5
 http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",service_name="🦊",status="200",le="+Inf"} 5
 http_requests_duration_seconds_sum{endpoint="/visible_fox",method="GET",service_name="🦊",status="200"} FLOAT
 http_requests_duration_seconds_count{endpoint="/visible_fox",method="GET",service_name="🦊",status="200"} 5

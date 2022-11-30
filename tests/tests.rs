@@ -15,19 +15,21 @@ use axum::{
 	Extension, Router,
 };
 use futures::future::poll_fn;
-use opentelemetry::metrics::Counter;
+use opentelemetry::{metrics::Counter, Context};
 use regex::Regex;
 use tower::Service;
 
 async fn visible_fox(Extension(fox_counter): Extension<Counter<u64>>) -> impl IntoResponse {
 	// need to keep track of foxes
-	fox_counter.add(1, &[]);
+	let ctx = Context::current();
+	fox_counter.add(&ctx, 1, &[]);
 	"Heya!"
 }
 
 async fn shy_fox(Extension(fox_counter): Extension<Counter<u64>>) -> impl IntoResponse {
 	// still counts tho
-	fox_counter.add(1, &[]);
+	let ctx = Context::current();
+	fox_counter.add(&ctx, 1, &[]);
 	"*hides*"
 }
 
@@ -38,7 +40,7 @@ async fn basic_functionality() -> Result<(), Box<dyn std::error::Error>> {
 	let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").init();
 	let metrics_middleware = metrics_middleware.build();
 
-	let mut service: Router<Body> = Router::new()
+	let mut service = Router::new()
 		.route("/metrics", get(axum_opentelemetry_middleware::metrics_endpoint))
 		.route("/visible_fox", get(visible_fox))
 		.route("/shy_fox", get(shy_fox))
