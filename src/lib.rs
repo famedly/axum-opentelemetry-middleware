@@ -216,12 +216,9 @@ where
 		Box::pin(async move {
 			let ctx = opentelemetry::Context::current();
 
-			let used_path = match matched_path {
-				Some(path) => path,
-				None => {
-					data.http_unmatched_requests_total.add(&ctx, 1, &[]);
-					return future.await;
-				}
+			let Some(path) = matched_path else {
+				data.http_unmatched_requests_total.add(&ctx, 1, &[]);
+				return future.await;
 			};
 
 			let start = time::OffsetDateTime::now_utc();
@@ -229,7 +226,7 @@ where
 			let resp = future.await?;
 
 			if let Some(filter_function) = &data.filter_function {
-				if !(filter_function)(&used_path, &method) {
+				if !(filter_function)(&path, &method) {
 					// If filter function returns false we do not want to track this request
 					return Ok(resp);
 				}
@@ -240,7 +237,7 @@ where
 			let status = resp.status().as_str().to_owned();
 
 			let attributes = [
-				KeyValue::new("endpoint", used_path),
+				KeyValue::new("endpoint", path),
 				KeyValue::new("method", method),
 				KeyValue::new("status", status),
 			];
