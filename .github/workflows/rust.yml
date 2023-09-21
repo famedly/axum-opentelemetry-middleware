@@ -1,0 +1,21 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+    uses: famedly/backend-build-workflows/.github/workflows/rust-workflow.yml@main
+    secrets: inherit
