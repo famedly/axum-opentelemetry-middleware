@@ -8,17 +8,18 @@ publish = ["famedly"]
 
 
 [dependencies]
-axum = { version = "0.6.1", features = ["headers"] }
-bytes = "1.1.0"
-futures = "0.3.21"
-opentelemetry = { version = "0.18.0", features = ["metrics", "rt-tokio"] }
-opentelemetry-prometheus = "0.11.0"
-prometheus = "0.13.0"
-time = "0.3.9"
-tokio = { version = "1.17.0", features = ["rt-multi-thread", "macros"] }
-tower = "0.4.12"
+axum = { version = "0.6.20", features = ["headers"] }
+bytes = "1.5.0"
+futures = "0.3.29"
+opentelemetry = { version = "0.21.0", features = ["metrics"] }
+opentelemetry_sdk = { version = "0.21.1", features = ["metrics", "rt-tokio"] }
+opentelemetry-prometheus = "0.14.1"
+prometheus = "0.13.3"
+time = "0.3.30"
+tokio = { version = "1.35.0", features = ["rt-multi-thread", "macros"] }
+tower = "0.4.13"
 
 [dev-dependencies]
 futures = "0.3.21"
-http = "0.2.6"
+http = "1.0.0"
 regex = "1.5.5"

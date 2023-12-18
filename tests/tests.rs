@@ -8,28 +8,27 @@
 	clippy::unused_async
 )]
 
+use std::future::poll_fn;
+
 use axum::{
 	body::{Body, HttpBody},
 	response::IntoResponse,
 	routing::get,
 	Extension, Router,
 };
-use futures::future::poll_fn;
-use opentelemetry::{metrics::Counter, Context};
+use opentelemetry::metrics::Counter;
 use regex::Regex;
 use tower::Service;
 
 async fn visible_fox(Extension(fox_counter): Extension<Counter<u64>>) -> impl IntoResponse {
 	// need to keep track of foxes
-	let ctx = Context::current();
-	fox_counter.add(&ctx, 1, &[]);
+	fox_counter.add(1, &[]);
 	"Heya!"
 }
 
 async fn shy_fox(Extension(fox_counter): Extension<Counter<u64>>) -> impl IntoResponse {
 	// still counts tho
-	let ctx = Context::current();
-	fox_counter.add(&ctx, 1, &[]);
+	fox_counter.add(1, &[]);
 	"*hides*"
 }
 
@@ -40,28 +39,29 @@ async fn basic_functionality() -> Result<(), Box<dyn std::error::Error>> {
 	let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").init();
 	let metrics_middleware = metrics_middleware.build();
 
-	let mut service = Router::new()
+	let mut service: Router = Router::new()
 		.route("/metrics", get(axum_opentelemetry_middleware::metrics_endpoint))
 		.route("/visible_fox", get(visible_fox))
 		.route("/shy_fox", get(shy_fox))
 		.layer(metrics_middleware)
 		.layer(Extension(fox_counter));
 
-	poll_fn(|cx| service.poll_ready(cx)).await?;
+	poll_fn(|cx| tower::Service::poll_ready(&mut service, cx)).await?;
 
 	for _ in 0..5 {
-		service.call(http::Request::get("/visible_fox").body(Body::empty())?).await?;
+		service.call(axum::http::Request::get("/visible_fox").body(Body::empty())?).await?;
 	}
 
-	service.call(http::Request::get("/shy_fox").body(Body::empty())?).await?;
+	service.call(axum::http::Request::get("/shy_fox").body(Body::empty())?).await?;
 
 	for _ in 0..10 {
 		// Endpoint doesn't exist so it should increase the unmatched requests counter
-		service.call(http::Request::get("/unmatched_fox").body(Body::empty())?).await?;
+		service.call(axum::http::Request::get("/unmatched_fox").body(Body::empty())?).await?;
 	}
 
-	let mut resp = service.call(http::Request::get("/metrics").body(Body::empty())?).await?;
-	let body = String::from_utf8(resp.data().await.unwrap()?.to_vec())?;
+	let resp = service.call(axum::http::Request::get("/metrics").body(Body::empty())?).await?;
+	let body: String =
+		String::from_utf8(resp.collect().await.unwrap().to_bytes().to_vec()).unwrap();
 	let re = Regex::new(r"[0-9]\.[0-9]*")?; // remove all floats as they will vary from run to run
 	let body = re.replace_all(&body, "FLOAT");
 

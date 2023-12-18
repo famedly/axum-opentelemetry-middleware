@@ -5,7 +5,6 @@ use std::{
 	fmt,
 	sync::Arc,
 	task::{Context, Poll},
-	time::Duration,
 };
 
 use axum::{
@@ -17,16 +16,12 @@ use axum::{
 };
 use futures::future::BoxFuture;
 use opentelemetry::{
-	metrics::{Counter, Histogram, Meter, MeterProvider},
-	sdk::{
-		export::metrics::aggregation,
-		metrics::{controllers, processors, selectors},
-		Resource,
-	},
+	global,
+	metrics::{Counter, Histogram, Meter, MeterProvider as _},
 	KeyValue,
 };
-use opentelemetry_prometheus::PrometheusExporter;
-use prometheus::{Encoder, TextEncoder};
+use opentelemetry_sdk::{metrics::MeterProvider, Resource};
+use prometheus::{Encoder, Registry, TextEncoder};
 use tower::{Layer, Service};
 
 /// Filter function type.
@@ -55,11 +50,8 @@ type FilterFunction = Arc<dyn Fn(&str, &str) -> bool + Send + Sync>;
 ///     .layer(Extension(fox_counter)); // (optional) add our own counter as an extension
 /// ```
 pub struct RecorderMiddlewareBuilder {
-	/// The prometheus exporter.
-	/// Eventually this should just be an
-	/// `opentelemetry::sdk::export::metrics::Exporter` but PrometheusExporter
-	/// doesn't appear to implement the Exporter trait
-	exporter: PrometheusExporter,
+	/// The prometheus registry.
+	registry: Registry,
 	/// Optional function for determining if an endpoint should be recorded or
 	/// not
 	filter_function: Option<FilterFunction>,
@@ -70,7 +62,7 @@ pub struct RecorderMiddlewareBuilder {
 impl fmt::Debug for RecorderMiddlewareBuilder {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("RecorderMiddlewareBuilder")
-			.field("exporter", &self.exporter)
+			.field("registry", &self.registry)
 			.field("meter", &self.meter)
 			.field("filter_function", &self.filter_function.is_some())
 			.finish()
@@ -81,27 +73,24 @@ impl RecorderMiddlewareBuilder {
 	/// Creates the builder for the optentelemetry middleware
 	#[must_use]
 	pub fn new(service_name: &str) -> Self {
-		let controller = controllers::basic(
-			processors::factory(
-				selectors::simple::histogram([0.1, 1.0, 5.0]),
-				aggregation::cumulative_temporality_selector(),
-			)
-			.with_memory(true),
-		)
-		.with_resource(Resource::new(vec![KeyValue::new("service.name", service_name.to_owned())]))
-		.with_collect_period(Duration::from_millis(500))
-		.build();
-
-		let exporter = opentelemetry_prometheus::exporter(controller).init();
-
+		let registry = Registry::new();
 		#[allow(clippy::expect_used)]
-		// If this fails then something is deeply wrong with the opentelemetry_prometheus crate
-		let meter = exporter
-			.meter_provider()
-			.expect("Failed to get PrometheusExporter provider")
-			.meter("axum-opentelemetry");
+		let exporter = opentelemetry_prometheus::exporter()
+			.with_registry(registry.clone())
+			.build()
+			.expect("Exporter should build");
+		let provider = MeterProvider::builder()
+			.with_resource(Resource::new(vec![KeyValue::new(
+				"service.name",
+				service_name.to_owned(),
+			)]))
+			.with_reader(exporter)
+			.build();
+		let meter = provider.meter("axum-opentelemetry");
 
-		Self { exporter, meter, filter_function: None }
+		global::set_meter_provider(provider);
+
+		Self { registry, meter, filter_function: None }
 	}
 
 	/// Registers a function for filtering which endpoints should be logged and
@@ -119,7 +108,7 @@ impl RecorderMiddlewareBuilder {
 	#[must_use]
 	/// Builds the middleware data
 	pub fn build(self) -> RecorderMiddleware {
-		RecorderMiddleware::new(self.meter, self.exporter, self.filter_function)
+		RecorderMiddleware::new(self.meter, self.registry, self.filter_function)
 	}
 }
 
@@ -127,8 +116,8 @@ impl RecorderMiddlewareBuilder {
 /// `Router::layer(middleware)` See [RecorderMiddlewareBuilder] for more details
 #[derive(Clone)]
 pub struct RecorderMiddleware {
-	/// The prometheus exporter
-	exporter: PrometheusExporter,
+	/// The prometheus registry
+	registry: Registry,
 	/// Metric tracking the duration of each request
 	http_requests_duration_seconds: Histogram<f64>,
 	/// Metric tracking amounts of taken requests
@@ -153,11 +142,7 @@ impl fmt::Debug for RecorderMiddleware {
 impl RecorderMiddleware {
 	/// Create the actual middleware struct
 	#[must_use]
-	fn new(
-		meter: Meter,
-		exporter: PrometheusExporter,
-		filter_function: Option<FilterFunction>,
-	) -> Self {
+	fn new(meter: Meter, registry: Registry, filter_function: Option<FilterFunction>) -> Self {
 		// ValueRecorder == prometheus histogram
 		let http_requests_duration_seconds =
 			meter.f64_histogram("http.requests.duration.seconds").init();
@@ -167,7 +152,7 @@ impl RecorderMiddleware {
 			meter.u64_counter("http.mismatched.requests.total").init();
 
 		Self {
-			exporter,
+			registry,
 			http_requests_duration_seconds,
 			http_requests_total,
 			http_unmatched_requests_total,
@@ -209,15 +194,13 @@ where
 	fn call(&mut self, mut req: Request<Body>) -> Self::Future {
 		let data = self.data.clone();
 		let method = req.method().as_str().to_owned();
-		req.extensions_mut().insert(data.exporter);
+		req.extensions_mut().insert(data.registry);
 		let matched_path =
 			req.extensions().get::<MatchedPath>().map(|path| path.as_str().to_owned());
 		let future = self.inner.call(req);
 		Box::pin(async move {
-			let ctx = opentelemetry::Context::current();
-
 			let Some(path) = matched_path else {
-				data.http_unmatched_requests_total.add(&ctx, 1, &[]);
+				data.http_unmatched_requests_total.add(1, &[]);
 				return future.await;
 			};
 
@@ -242,12 +225,8 @@ where
 				KeyValue::new("status", status),
 			];
 
-			data.http_requests_duration_seconds.record(
-				&ctx,
-				time_taken.as_seconds_f64(),
-				&attributes,
-			);
-			data.http_requests_total.add(&ctx, 1, &attributes);
+			data.http_requests_duration_seconds.record(time_taken.as_seconds_f64(), &attributes);
+			data.http_requests_total.add(1, &attributes);
 
 			Ok(resp)
 		})
@@ -258,10 +237,10 @@ where
 /// usually should be on get("/metrics")
 #[allow(clippy::unused_async)] // needs to be async else axum complains
 pub async fn metrics_endpoint(
-	Extension(exporter): Extension<PrometheusExporter>,
+	Extension(registry): Extension<Registry>,
 ) -> Result<String, (StatusCode, String)> {
 	let encoder = TextEncoder::new();
-	let metric_families = exporter.registry().gather();
+	let metric_families = registry.gather();
 	let mut result = Vec::new();
 	encoder
 		.encode(&metric_families, &mut result)
