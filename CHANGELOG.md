@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] 2024-01-09
+
+### Miscellaneous Tasks
+
+- Update opentelemetry dependencies
+
 ## [0.2.0] - 2022-11-30
 
 ### Bug Fixes
