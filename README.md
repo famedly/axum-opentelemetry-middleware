@@ -1,4 +1,4 @@
-# Axum Opentelemetry Middelware
+# Axum Opentelemetry Middleware
 
 A middleware for axum that allows users to get insight into which endpoints are being hit how often for how long as well as registering their own metrics.
 
