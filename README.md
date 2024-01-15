@@ -48,7 +48,7 @@ file within the repository.
 
 If you compile the open source software that we make available to develop your
 own mobile, desktop or embeddable application, and cause that application to
-connect to our servers for any purposes, you have to aggree to our Terms of
+connect to our servers for any purposes, you have to agree to our Terms of
 Service. In short, if you choose to connect to our servers, certain restrictions
 apply as follows:
 

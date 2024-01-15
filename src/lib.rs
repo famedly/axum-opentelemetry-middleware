@@ -147,9 +147,8 @@ impl RecorderMiddleware {
 		let http_requests_duration_seconds =
 			meter.f64_histogram("http.requests.duration.seconds").init();
 
-		let http_requests_total = meter.u64_counter("http.requests.total").init();
-		let http_unmatched_requests_total =
-			meter.u64_counter("http.mismatched.requests.total").init();
+		let http_requests_total = meter.u64_counter("http.requests").init();
+		let http_unmatched_requests_total = meter.u64_counter("http.mismatched.requests").init();
 
 		Self {
 			registry,

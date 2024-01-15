@@ -1,7 +1,7 @@
 # TYPE fox_counter_total counter
 fox_counter_total{otel_scope_name="axum-opentelemetry"} 6
-# TYPE http_mismatched_requests_total_total counter
-http_mismatched_requests_total_total{otel_scope_name="axum-opentelemetry"} 10
+# TYPE http_mismatched_requests_total counter
+http_mismatched_requests_total{otel_scope_name="axum-opentelemetry"} 10
 # TYPE http_requests_duration_seconds histogram
 http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry",le="0"} 0
 http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry",le="5"} 5
@@ -21,8 +21,8 @@ http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",statu
 http_requests_duration_seconds_bucket{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry",le="+Inf"} 5
 http_requests_duration_seconds_sum{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry"} FLOAT
 http_requests_duration_seconds_count{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry"} 5
-# TYPE http_requests_total_total counter
-http_requests_total_total{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry"} 5
+# TYPE http_requests_total counter
+http_requests_total{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry"} 5
 # HELP otel_scope_info Instrumentation Scope metadata
 # TYPE otel_scope_info gauge
 otel_scope_info{otel_scope_name="axum-opentelemetry"} 1
