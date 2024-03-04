@@ -12,7 +12,7 @@ axum = { version = "0.6.20", features = ["headers"] }
 bytes = "1.5.0"
 futures = "0.3.29"
 opentelemetry = { version = "0.21.0", features = ["metrics"] }
-opentelemetry_sdk = { version = "0.21.1", features = ["metrics", "rt-tokio"] }
+opentelemetry_sdk = { version = "0.22.1", features = ["metrics", "rt-tokio"] }
 opentelemetry-prometheus = "0.14.1"
 prometheus = "0.13.3"
 time = "0.3.30"
