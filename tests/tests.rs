@@ -13,6 +13,7 @@ use std::future::poll_fn;
 use axum::{body::Body, extract::Request, response::IntoResponse, routing::get, Extension, Router};
 use http_body_util::BodyExt;
 use opentelemetry::metrics::Counter;
+use pretty_assertions::assert_eq;
 use regex::Regex;
 use tower::Service;
 

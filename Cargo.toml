@@ -23,4 +23,5 @@ tower = "0.5.1"
 [dev-dependencies]
 futures = "0.3.30"
 http = "1.1.0"
+pretty_assertions = "1.4.1"
 regex = "1.10.6"
