@@ -44,5 +44,10 @@ async fn main() {
 		.layer(Extension(fox_counter));
 
 	let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-	axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+	axum::serve(
+		tokio::net::TcpListener::bind(&addr).await.expect("Failed to bind to addr"),
+		app.into_make_service(),
+	)
+	.await
+	.expect("Failed to serve service");
 }

@@ -10,12 +10,8 @@
 
 use std::future::poll_fn;
 
-use axum::{
-	body::{Body, HttpBody},
-	response::IntoResponse,
-	routing::get,
-	Extension, Router,
-};
+use axum::{body::Body, extract::Request, response::IntoResponse, routing::get, Extension, Router};
+use http_body_util::BodyExt;
 use opentelemetry::metrics::Counter;
 use regex::Regex;
 use tower::Service;
@@ -46,7 +42,7 @@ async fn basic_functionality() -> Result<(), Box<dyn std::error::Error>> {
 		.layer(metrics_middleware)
 		.layer(Extension(fox_counter));
 
-	poll_fn(|cx| tower::Service::poll_ready(&mut service, cx)).await?;
+	poll_fn(|cx| <Router as tower::Service<Request>>::poll_ready(&mut service, cx)).await?;
 
 	for _ in 0..5 {
 		service.call(axum::http::Request::get("/visible_fox").body(Body::empty())?).await?;

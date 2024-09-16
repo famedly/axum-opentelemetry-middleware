@@ -17,10 +17,10 @@ use axum::{
 use futures::future::BoxFuture;
 use opentelemetry::{
 	global,
-	metrics::{Counter, Histogram, Meter, MeterProvider as _},
+	metrics::{Counter, Histogram, Meter, MeterProvider},
 	KeyValue,
 };
-use opentelemetry_sdk::{metrics::MeterProvider, Resource};
+use opentelemetry_sdk::{metrics::SdkMeterProvider, Resource};
 use prometheus::{Encoder, Registry, TextEncoder};
 use tower::{Layer, Service};
 
@@ -79,7 +79,7 @@ impl RecorderMiddlewareBuilder {
 			.with_registry(registry.clone())
 			.build()
 			.expect("Exporter should build");
-		let provider = MeterProvider::builder()
+		let provider = SdkMeterProvider::builder()
 			.with_resource(Resource::new(vec![KeyValue::new(
 				"service.name",
 				service_name.to_owned(),
