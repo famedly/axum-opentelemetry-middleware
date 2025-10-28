@@ -8,7 +8,7 @@ publish = ["famedly"]
 
 
 [dependencies]
-axum = { version = "0.7.5" }
+axum = { version = "0.8.6" }
 bytes = "1.7.1"
 futures = "0.3.30"
 http-body-util = "0.1.2"
