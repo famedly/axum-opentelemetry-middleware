@@ -40,7 +40,7 @@ type FilterFunction = Arc<dyn Fn(&str, &str) -> bool + Send + Sync>;
 /// // Optionally set a filter function which returns true if the request should be logged
 ///     .filter_function(&|endpoint, _method| endpoint != ":blubb/uwu"); //
 /// // Initialize our own metric (optional)
-/// let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").init();
+/// let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").build();
 /// // Build the middleware
 /// let metrics_middleware = metrics_middleware.build();
 ///
@@ -80,10 +80,11 @@ impl RecorderMiddlewareBuilder {
 			.build()
 			.expect("Exporter should build");
 		let provider = SdkMeterProvider::builder()
-			.with_resource(Resource::new(vec![KeyValue::new(
-				"service.name",
-				service_name.to_owned(),
-			)]))
+			.with_resource(
+				Resource::builder()
+					.with_attribute(KeyValue::new("service.name", service_name.to_owned()))
+					.build(),
+			)
 			.with_reader(exporter)
 			.build();
 		let meter = provider.meter("axum-opentelemetry");
@@ -145,10 +146,10 @@ impl RecorderMiddleware {
 	fn new(meter: Meter, registry: Registry, filter_function: Option<FilterFunction>) -> Self {
 		// ValueRecorder == prometheus histogram
 		let http_requests_duration_seconds =
-			meter.f64_histogram("http.requests.duration.seconds").init();
+			meter.f64_histogram("http.requests.duration.seconds").build();
 
-		let http_requests_total = meter.u64_counter("http.requests").init();
-		let http_unmatched_requests_total = meter.u64_counter("http.mismatched.requests").init();
+		let http_requests_total = meter.u64_counter("http.requests").build();
+		let http_unmatched_requests_total = meter.u64_counter("http.mismatched.requests").build();
 
 		Self {
 			registry,

@@ -33,7 +33,7 @@ async fn fooox(Extension(fox_counter): Extension<Counter<u64>>) -> impl IntoResp
 async fn main() {
 	let metrics_middleware = axum_opentelemetry_middleware::RecorderMiddlewareBuilder::new("🦊")
 		.filter_function(&|endpoint, _method| endpoint != ":blubb/uwu");
-	let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").init();
+	let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").build();
 	let metrics_middleware = metrics_middleware.build();
 
 	let app = Router::new()

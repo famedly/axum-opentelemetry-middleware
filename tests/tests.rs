@@ -33,7 +33,7 @@ async fn shy_fox(Extension(fox_counter): Extension<Counter<u64>>) -> impl IntoRe
 async fn basic_functionality() -> Result<(), Box<dyn std::error::Error>> {
 	let metrics_middleware = axum_opentelemetry_middleware::RecorderMiddlewareBuilder::new("🦊")
 		.filter_function(&|endpoint, _method| endpoint != "/shy_fox"); // Skip the endpoint /shy_fox
-	let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").init();
+	let fox_counter = metrics_middleware.meter.u64_counter("fox.counter").build();
 	let metrics_middleware = metrics_middleware.build();
 
 	let mut service: Router = Router::new()

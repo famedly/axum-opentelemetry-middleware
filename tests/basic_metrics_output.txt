@@ -25,4 +25,4 @@ http_requests_duration_seconds_count{endpoint="/visible_fox",method="GET",status
 http_requests_total{endpoint="/visible_fox",method="GET",status="200",otel_scope_name="axum-opentelemetry"} 5
 # HELP target_info Target metadata
 # TYPE target_info gauge
-target_info{service_name="🦊"} 1
+target_info{service_name="🦊",telemetry_sdk_language="rust",telemetry_sdk_name="opentelemetry",telemetry_sdk_version="FLOAT.0"} 1
